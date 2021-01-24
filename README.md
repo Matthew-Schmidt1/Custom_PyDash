@@ -1,3 +1,7 @@
+This a a modification of PyDash from 
+
+https://gitlab.com/k3oni/pydash
+
 pyDash - v1.4.6
 ======
 
