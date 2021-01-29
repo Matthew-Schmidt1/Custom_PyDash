@@ -42,6 +42,7 @@
             <li><a href="#refresh-cpu"><i class="fa fa-check"></i><span>CPU</span> </a> </li>
             <li><a href="#refresh-ram"><i class="fa fa-list-alt"></i><span>RAM</span> </a> </li>
             <li><a href="#refresh-load"><i class="fa fa-bolt"></i><span>Load</span> </a> </li>
+            <li><a href="#refresh-CpuTemp"><i class="fa fa-bolt"></i><span>Cpu Temp</span> </a> </li>
             <li><a href="#refresh-online"><i class="fa fa-user"></i><span>Users</span> </a> </li>
             <li><a href="#refresh-netstat"><i class="fa fa-angle-down"></i><span>Netstat</span> </a> </li>
             <li><a href="#refresh-ispeed"><i class="fa fa-exchange"></i><span>Network</span> </a> </li>
@@ -161,12 +162,26 @@
             </div>
             <!-- /widget-content -->
           </div>
+          <div class="widget widget-table action-table">
+            <div class="widget-header"> <i class="fa fa-bolt"></i>
+              <h3>CPU Temperature Average</h3><i class="fa fa-minus"></i>
+              <div id="refresh-CpuTemp">
+              </div>
+            </div>
+            <!-- /widget-header -->
+            <div class="widget-content">
+                <p></p>
+                <canvas id="CpuTempChart" width="560" height="200"></canvas>
+            </div>
+            <!-- /widget-content -->
+          </div>
+
           <!-- /widget -->
           </div>
+          
         <!-- /span6 -->
         </div>
     <!-- /row -->
-    
     
       <div class="row">
         <div class="span6">
@@ -391,10 +406,25 @@ var load_ctx = $("#loadChart").get(0).getContext("2d");
             });
         }
 
+var cpu_temp = $("#CpuTempChart").get(0).getContext("2d");
+        var CpuTempChart = new Chart(cpu_temp);
+        function cpuTemp_average(){
+            $.getJSON('/info/cputempaverage/', function(data) {
+                var options = {
+                    animation : false,
+                    pointDotRadius : 2,
+                    scaleBeginAtZero : true,
+                    scaleLabel : "<%=value%> C"
+                }
+                CpuTempChart.Line(data, options);
+            });
+        }
+
 $(function() {
             window.setInterval('dashboard.getProc()', {{ time_refresh_long }});
             window.setInterval('memory_usage()', {{ time_refresh }});
             window.setInterval('load_average()', {{ time_refresh }});
+            window.setInterval('cpuTemp_average()', {{ time_refresh }});
             window.setInterval('cpuu_usage()', {{ time_refresh }});
             window.setInterval('traffic_usage()', {{ time_refresh_net }});
             window.setInterval('disk_io()', {{ time_refresh_net }});
@@ -408,6 +438,7 @@ $(function pageLoad() {
     dashboard.getProc();
     memory_usage();
     load_average();
+    cpuTemp_average();
     cpuu_usage();
     traffic_usage();
     disk_io();

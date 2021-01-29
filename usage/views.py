@@ -315,28 +315,28 @@ def memusage(request):
         'labels': [""] * 10,
         'datasets': [
             {
-                "fillColor": "rgba(247,70,74,0.5)",
+                "fillColor": "rgba(247,70,74,1)",
                 "strokeColor": "rgba(247,70,74,1)",
                 "pointColor": "rgba(247,70,74,1)",
                 "pointStrokeColor": "#fff",
                 "data": datasets_used
             },
             {
-                "fillColor": "rgba(43,214,66,0.5)",
+                "fillColor": "rgba(43,214,66,0.2)",
                 "strokeColor": "rgba(43,214,66,1)",
                 "pointColor": "rgba(43,214,66,1)",
                 "pointStrokeColor": "#fff",
                 "data": datasets_free
             },
             {
-                "fillColor": "rgba(0,154,205,0.5)",
+                "fillColor": "rgba(0,154,205,0.4)",
                 "strokeColor": "rgba(0,154,205,1)",
                 "pointColor": "rgba(0,154,205,1)",
                 "pointStrokeColor": "#fff",
                 "data": datasets_buffers
             },
             {
-                "fillColor": "rgba(255,185,15,0.5)",
+                "fillColor": "rgba(255,185,15,0.4)",
                 "strokeColor": "rgba(255,185,15,1)",
                 "pointColor": "rgba(265,185,15,1)",
                 "pointStrokeColor": "#fff",
@@ -410,6 +410,77 @@ def loadaverage(request):
     response = HttpResponse()
     response['Content-Type'] = "text/javascript"
     response.cookies['load_average'] = datasets
+    response.write(data)
+    return response
+
+@login_required(login_url='/login/')
+def cputempaverage(request):
+    """
+    Return Cpu Temp Average numeric
+    """
+    datasets = []
+
+    try:
+        load_average = get_cputemp()
+    except Exception:
+        load_average = 0
+
+    try:
+        cookies = request.COOKIES['CpuTemp_average']
+    except Exception:
+        cookies = None
+
+    if not cookies:
+        datasets.append(0)
+    else:
+        datasets = json.loads(cookies)
+    
+    if len(datasets) > 10:
+        while datasets:
+            del datasets[0]
+            if len(datasets) == 10:
+                break
+    if len(datasets) <= 9:
+        datasets.append(float(load_average))
+    if len(datasets) == 10:
+        datasets.append(float(load_average))
+        del datasets[0]
+
+    # Some fix division by 0 Chart.js
+    if len(datasets) == 10:
+        if sum(datasets) == 0:
+            datasets[9] += 0.1
+        if sum(datasets) / 10 == datasets[0]:
+            datasets[9] += 0.1
+
+    fillColor = "rgba(151,187,205,0.5)"
+    average = sum(datasets)/len(datasets)
+
+    if average >= 60:
+        fillColor = "rgba(255, 0, 0, 0.5)"
+    elif average >= 40:
+        fillColor = "rgba(230, 138, 0, 0.5)"
+    else:
+        fillColor = "rgba(51, 204, 51,0.5)"
+
+    load = {
+        'labels': [""] * 10,
+        'datasets': [
+            {
+                "fillColor": fillColor,
+                "strokeColor": "rgba(151,187,205,1)",
+                "pointColor": "rgba(151,187,205,1)",
+                "pointStrokeColor": "#fff",
+                "data": datasets,
+                "average" : average
+            }
+        ]
+    }
+
+    data = json.dumps(load)
+    response = HttpResponse()
+    response['Content-Type'] = "text/javascript"
+    response.cookies['CpuTemp_average'] = datasets
     response.write(data)
     return response
 

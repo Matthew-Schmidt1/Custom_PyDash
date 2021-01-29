@@ -248,7 +248,7 @@ def get_mem():
     """
     try:
         pipe = os.popen(
-            "free -tm | " + "grep 'Mem' | " + "awk '{print $2,$4,$6,$7}'")
+            "free -tm | " + "grep 'Mem' | " + "awk '{print $2,$4,$6,$7, $3}'")
         data = pipe.read().strip().split()
         pipe.close()
 
@@ -256,13 +256,14 @@ def get_mem():
         freemem = int(data[1])
         buffers = int(data[2])
         cachedmem = int(data[3])
+        usage = int(data[4])
 
         # Memory in buffers + cached is actually available, so we count it
         # as free. See http://www.linuxatemyram.com/ for details
-        freemem += buffers + cachedmem
+        freemem += buffers 
 
         percent = (100 - ((freemem * 100) / allmem))
-        usage = (allmem - freemem)
+       #usage = (allmem - freemem)
 
         mem_usage = {'usage': usage, 'buffers': buffers, 'cached': cachedmem, 'free': freemem, 'percent': percent}
 
@@ -312,6 +313,18 @@ def get_load():
     """
     try:
         data = os.getloadavg()[0]
+    except Exception as err:
+        data = str(err)
+
+    return data
+
+def get_cputemp():
+    """
+    Get Cpu Temp average
+    """
+    try:
+        result = os.popen('sensors k10temp-pci-00c3 | grep -E "temp1"').read().split(' ')[8][1:-2]
+        data = result
     except Exception as err:
         data = str(err)
 
